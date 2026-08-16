@@ -5,8 +5,10 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "lint": "eslint",
     "start": "next start",
-    "lint": "eslint"
+    "seed": "tsx scripts/seed.ts",
+    "seed:reset": "tsx scripts/seed.ts --reset"
   },
   "dependencies": {
     "firebase": "^12.17.1",

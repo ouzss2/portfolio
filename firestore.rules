@@ -1,0 +1,120 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ----------------------------------------------------------------
+    // Helpers
+    // ----------------------------------------------------------------
+
+    // Replace with your Firebase Auth UID after creating the admin user.
+    // Find it in Firebase Console > Authentication > Users.
+    function isOwner() {
+      return request.auth != null
+             && request.auth.uid == 'rQcQTwYZphXwY9nT8Qq1c2WrqEB2';
+    }
+
+    function isPublished() {
+      return resource.data.status == 'published';
+    }
+
+    // ----------------------------------------------------------------
+    // Gated content â€” public sees published only, owner sees everything
+    // ----------------------------------------------------------------
+
+    match /projects/{projectId} {
+      allow read: if isPublished() || isOwner();
+      allow create, update, delete: if isOwner();
+    }
+
+    match /articles/{articleId} {
+      allow read: if isPublished() || isOwner();
+      allow create, update, delete: if isOwner();
+    }
+
+    match /testimonials/{testimonialId} {
+      allow read: if isPublished() || isOwner();
+      allow create, update, delete: if isOwner();
+    }
+
+    // ----------------------------------------------------------------
+    // Always-public reference data
+    // ----------------------------------------------------------------
+
+    match /skills/{skillId} {
+      allow read: if true;
+      allow write: if isOwner();
+    }
+
+    match /skillCategories/{categoryId} {
+      allow read: if true;
+      allow write: if isOwner();
+    }
+
+    match /experiences/{experienceId} {
+      allow read: if true;
+      allow write: if isOwner();
+    }
+
+    match /education/{educationId} {
+      allow read: if true;
+      allow write: if isOwner();
+    }
+
+    match /certifications/{certificationId} {
+      allow read: if true;
+      allow write: if isOwner();
+    }
+
+    match /services/{serviceId} {
+      allow read: if true;
+      allow write: if isOwner();
+    }
+
+    match /settings/{docId} {
+      allow read: if true;
+      allow write: if isOwner();
+    }
+
+    // ----------------------------------------------------------------
+    // Contact form â€” anyone may submit, only owner may read
+    // ----------------------------------------------------------------
+
+    match /messages/{messageId} {
+      allow create: if request.resource.data.keys().hasAll(
+                         ['name', 'email', 'message', 'subjectType', 'status', 'createdAt']
+                       )
+                    && request.resource.data.name is string
+                    && request.resource.data.name.size() > 0
+                    && request.resource.data.name.size() <= 120
+                    && request.resource.data.email is string
+                    && request.resource.data.email.matches('.+@.+\\..+')
+                    && request.resource.data.message is string
+                    && request.resource.data.message.size() > 10
+                    && request.resource.data.message.size() <= 5000
+                    && request.resource.data.subjectType in
+                         ['job', 'freelance', 'training', 'other']
+                    && request.resource.data.status == 'unread';
+
+      allow read, update, delete: if isOwner();
+    }
+
+    // ----------------------------------------------------------------
+    // Counters
+    // ----------------------------------------------------------------
+
+    match /stats/{docId} {
+      allow read: if true;
+      allow write: if isOwner();
+    }
+
+    // ----------------------------------------------------------------
+    // Deny anything not matched above
+    // ----------------------------------------------------------------
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+
