@@ -1,0 +1,18 @@
+import HotReloadHero from "@/components/HotReloadHero";
+import { getProfile } from "@/lib/queries";
+
+export const revalidate = 3600;
+
+export default async function Home() {
+  const profile = await getProfile();
+
+  return (
+    <main>
+      <HotReloadHero
+        name={profile?.fullName ?? "Oussema Mansouri"}
+        role={profile?.headline.en ?? "Mobile Developer"}
+        availability={profile?.availabilityStatus ?? "open"}
+      />
+    </main>
+  );
+}

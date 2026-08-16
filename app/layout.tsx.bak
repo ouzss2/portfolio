@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Bricolage_Grotesque, Public_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
-/* Display: wide, variable, characterful. Used with restraint - headline
+/* Display: wide, variable, characterful. Used with restraint â€” headline
    and section titles only. */
 const bricolage = Bricolage_Grotesque({
   variable: "--font-bricolage",
@@ -28,7 +28,7 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Oussema Mansouri - Mobile Developer (iOS, Flutter, Android)",
+  title: "Oussema Mansouri â€” Mobile Developer (iOS, Flutter, Android)",
   description:
     "Mobile developer and instructor in Tunis. Native iOS with Swift and SwiftUI, cross-platform Flutter, native Android.",
 };
