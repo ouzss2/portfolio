@@ -1,3 +1,20 @@
+# ============================================================
+#  Portfolio - reseed with encoding-safe data
+#  Run from project root:  .\setup-reseed.ps1
+#  Then:  npm run seed:reset
+#
+#  All accented and special characters are written as \uXXXX
+#  escapes, so the file on disk is pure ASCII and no codepage
+#  can corrupt it. They decode to real characters at runtime.
+# ============================================================
+
+$ErrorActionPreference = "Stop"
+if (-not (Test-Path ".\package.json")) {
+  Write-Host "ERROR: run this from the portfolio root." -ForegroundColor Red; exit 1
+}
+$utf8NoBom = New-Object System.Text.UTF8Encoding $false
+
+$c0 = @'
 /**
  * Firestore seed script.
  *
@@ -481,3 +498,11 @@ seed()
     console.error("\nSeed failed:", err);
     process.exit(1);
   });
+
+'@
+
+[System.IO.File]::WriteAllText((Join-Path $PWD.Path 'scripts\seed.ts'), $c0, $utf8NoBom)
+Write-Host "  wrote  scripts\seed.ts" -ForegroundColor Green
+Write-Host ""
+Write-Host "Now run:  npm run seed:reset" -ForegroundColor Yellow
+Write-Host "(reset wipes the collections first, clearing the corrupted text)" -ForegroundColor DarkGray

@@ -121,3 +121,16 @@
     text-decoration-color: var(--color-accent);
   }
 }
+
+/* Screen change inside the pinned device. Short and slight - the device
+   is a fixed object, only its contents move. */
+@keyframes screenIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
