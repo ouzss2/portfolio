@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import type { Skill, SkillCategory, Certification, Project } from "@/lib/types";
+import type { Skill, SkillCategory, Certification, Project, Locale } from "@/lib/types";
+import { t as tr } from "@/lib/types";
+import { getDict } from "@/lib/i18n";
 
 /**
  * Stack.
@@ -28,12 +30,15 @@ export default function Skills({
   groups,
   certifications,
   projects = [],
+  locale,
 }: {
   groups: Array<{ category: SkillCategory; skills: Skill[] }>;
   certifications: Certification[];
   projects?: Project[];
+  locale: Locale;
 }) {
   const [hovered, setHovered] = useState<string | null>(null);
+  const d = getDict(locale);
 
   const proofFor = (skillId: string) =>
     projects.filter((p) => p.skillIds.includes(skillId));
@@ -41,13 +46,11 @@ export default function Skills({
   return (
     <section className="mx-auto max-w-5xl px-6 py-28">
       <div className="rule pt-8">
-        <p className="eyebrow">Stack</p>
+        <p className="eyebrow">{d.stack}</p>
       </div>
 
       <p className="mt-6 max-w-lg text-[color:var(--color-ink-muted)]">
-        Levels run 1 to 5, where 3 is production comfortable and 5 means I
-        teach it. Rated honestly, because an inflated number gets caught in
-        the first technical round.
+        {d.stackNote}
       </p>
 
       <div className="mt-14 grid gap-x-16 gap-y-14 md:grid-cols-2">
@@ -57,7 +60,7 @@ export default function Skills({
               className="font-[family-name:var(--font-display)] font-semibold"
               style={{ fontSize: "1.125rem", letterSpacing: "-0.01em" }}
             >
-              {category.name.en}
+              {tr(category.name, locale)}
             </h3>
 
             <div className="mt-4">
@@ -96,7 +99,7 @@ export default function Skills({
                         className="pb-3 font-[family-name:var(--font-mono)] text-[11px] leading-relaxed"
                         style={{ color: "var(--color-accent)" }}
                       >
-                        {proof.map((p) => p.title.en).join(" / ")}
+                        {proof.map((p) => tr(p.title, locale)).join(" / ")}
                       </p>
                     </div>
                   </div>
@@ -109,7 +112,7 @@ export default function Skills({
 
       {certifications.length > 0 && (
         <div className="mt-20">
-          <p className="eyebrow">Certification</p>
+          <p className="eyebrow">{d.certification}</p>
           <div className="mt-5 flex flex-wrap gap-8">
             {certifications.map((c) => (
               <div key={c.id}>
@@ -124,7 +127,7 @@ export default function Skills({
                     rel="noreferrer"
                     className="link-underline mt-2 inline-block text-sm"
                   >
-                    Verify
+                    {d.verify}
                   </a>
                 )}
               </div>

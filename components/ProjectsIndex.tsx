@@ -2,7 +2,10 @@
 
 import Link from "next/link";
 import { useState, useMemo } from "react";
-import type { Project, Skill } from "@/lib/types";
+import type { Project, Skill, Locale } from "@/lib/types";
+import { t as tr } from "@/lib/types";
+import { getDict } from "@/lib/i18n";
+import { platformOf, PLATFORM_COLOR, type Platform } from "@/lib/platform";
 
 /**
  * Projects index.
@@ -15,24 +18,17 @@ import type { Project, Skill } from "@/lib/types";
 
 const FILTERS = ["All", "iOS", "Flutter", "Android"] as const;
 
-function platformOf(project: Project, skills: Skill[]): string {
-  const names = skills
-    .filter((s) => project.skillIds.includes(s.id))
-    .map((s) => s.name.toLowerCase());
-  if (names.some((n) => n.includes("flutter") || n.includes("dart"))) return "Flutter";
-  if (names.some((n) => n.includes("swift") || n.includes("uikit"))) return "iOS";
-  if (names.some((n) => n.includes("kotlin") || n.includes("java"))) return "Android";
-  return "Mobile";
-}
-
 export default function ProjectsIndex({
   projects,
   skills,
+  locale,
 }: {
   projects: Project[];
   skills: Skill[];
+  locale: Locale;
 }) {
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>("All");
+  const d = getDict(locale);
 
   const tagged = useMemo(
     () => projects.map((p) => ({ project: p, platform: platformOf(p, skills) })),
@@ -45,8 +41,8 @@ export default function ProjectsIndex({
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-20">
-      <Link href="/" className="link-underline text-sm">
-        Back
+      <Link href={`/${locale}`} className="link-underline text-sm">
+        {d.back}
       </Link>
 
       <h1
@@ -57,7 +53,7 @@ export default function ProjectsIndex({
           letterSpacing: "-0.035em",
         }}
       >
-        Projects
+        {d.projects}
       </h1>
 
       <div className="mt-10 flex flex-wrap gap-2">
@@ -76,12 +72,23 @@ export default function ProjectsIndex({
               aria-pressed={active}
               className="eyebrow border px-3 py-1.5 transition-colors disabled:opacity-35"
               style={{
-                borderColor: active ? "var(--color-ink)" : "var(--color-line)",
-                backgroundColor: active ? "var(--color-ink)" : "transparent",
-                color: active ? "var(--color-paper)" : "var(--color-ink-muted)",
+                borderColor:
+                  f === "All"
+                    ? "var(--color-ink)"
+                    : PLATFORM_COLOR[f as Platform].ink,
+                backgroundColor: active
+                  ? f === "All"
+                    ? "var(--color-ink)"
+                    : PLATFORM_COLOR[f as Platform].ink
+                  : "transparent",
+                color: active
+                  ? "var(--color-paper)"
+                  : f === "All"
+                    ? "var(--color-ink-muted)"
+                    : PLATFORM_COLOR[f as Platform].ink,
               }}
             >
-              {f} ({count})
+              {f === "All" ? d.all : f} ({count})
             </button>
           );
         })}
@@ -89,8 +96,7 @@ export default function ProjectsIndex({
 
       {visible.length === 0 ? (
         <p className="mt-16 max-w-md text-[color:var(--color-ink-muted)]">
-          Nothing published here yet. Case studies appear once they have a real
-          narrative and a recording of the app running.
+          {d.nothingHere}
         </p>
       ) : (
         <div className="mt-16 space-y-16">
@@ -105,7 +111,10 @@ export default function ProjectsIndex({
                 <div>
                   <span
                     className="eyebrow inline-block border px-2.5 py-1"
-                    style={{ borderColor: "var(--color-line)" }}
+                    style={{
+                      borderColor: PLATFORM_COLOR[platform].ink,
+                      color: PLATFORM_COLOR[platform].ink,
+                    }}
                   >
                     {platform}
                   </span>
@@ -120,15 +129,15 @@ export default function ProjectsIndex({
                     style={{ fontSize: "1.75rem", letterSpacing: "-0.02em" }}
                   >
                     <Link
-                      href={`/projects/${project.slug}`}
+                      href={`/${locale}/projects/${project.slug}`}
                       className="hover:opacity-70"
                     >
-                      {project.title.en}
+                      {tr(project.title, locale)}
                     </Link>
                   </h2>
 
                   <p className="mt-3 max-w-xl leading-relaxed text-[color:var(--color-ink-muted)]">
-                    {project.summary.en}
+                    {tr(project.summary, locale)}
                   </p>
 
                   <div className="mt-5 flex flex-wrap gap-x-3 gap-y-1">
@@ -143,10 +152,10 @@ export default function ProjectsIndex({
                   </div>
 
                   <Link
-                    href={`/projects/${project.slug}`}
+                    href={`/${locale}/projects/${project.slug}`}
                     className="link-underline mt-6 inline-block text-sm"
                   >
-                    Read the case study
+                    {d.readCaseStudy}
                   </Link>
                 </div>
               </article>

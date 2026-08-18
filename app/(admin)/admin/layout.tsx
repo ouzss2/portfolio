@@ -50,6 +50,12 @@ function Shell({ children }: { children: React.ReactNode }) {
           <Link href="/admin" className="font-[family-name:var(--font-mono)] text-sm">
             Admin
           </Link>
+          <Link href="/admin/messages" className="link-underline text-sm">
+            Inbox
+          </Link>
+          <Link href="/admin/settings" className="link-underline text-sm">
+            Profile
+          </Link>
           <Link href="/" className="link-underline text-sm" target="_blank">
             View site
           </Link>

@@ -4,7 +4,8 @@ import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { doc, getDoc, updateDoc, collection, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
-import type { Project, Skill, Localized } from "@/lib/types";
+import type { Project, Skill, Localized, MediaItem } from "@/lib/types";
+import MediaUpload from "@/components/admin/MediaUpload";
 
 /**
  * Project editor.
@@ -184,18 +185,125 @@ export default function ProjectEditor({
       </div>
 
       {/* --- meta ------------------------------------------------- */}
+      {/* --- cover ------------------------------------------------ */}
       <div className="rule mt-8 pt-6">
-        <label className="eyebrow">Cover image URL</label>
-        <input
-          value={project.coverImageUrl}
-          onChange={(e) => set("coverImageUrl", e.target.value)}
-          placeholder="https://res.cloudinary.com/..."
-          className="mt-2 w-full px-3 py-2 text-sm"
-          style={{
-            border: "1px solid var(--color-line)",
-            backgroundColor: "var(--color-paper-raised)",
-          }}
-        />
+        <label className="eyebrow">Cover</label>
+        <p className="mt-1.5 text-xs text-[color:var(--color-ink-muted)]">
+          Shown on the home page and in the pinned device. A still frame from
+          the app beats a logo.
+        </p>
+
+        {project.coverImageUrl && (
+          <div className="mt-3 flex items-start gap-4">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={project.coverImageUrl}
+              alt=""
+              className="h-28 w-28 object-cover"
+              style={{ border: "1px solid var(--color-line)" }}
+            />
+            <button
+              onClick={() => set("coverImageUrl", "")}
+              className="text-xs"
+              style={{ color: "var(--color-status-closed)" }}
+            >
+              Remove
+            </button>
+          </div>
+        )}
+
+        <div className="mt-3">
+          <MediaUpload
+            label={project.coverImageUrl ? "Replace cover" : "Upload cover"}
+            accept="image/*"
+            onUploaded={(url) => set("coverImageUrl", url)}
+          />
+        </div>
+      </div>
+
+      {/* --- gallery ---------------------------------------------- */}
+      <div className="rule mt-6 pt-6">
+        <label className="eyebrow">Media</label>
+        <p className="mt-1.5 text-xs text-[color:var(--color-ink-muted)]">
+          Screenshots and screen recordings. A 15 second video of the app
+          running is worth more than five static screens.
+        </p>
+
+        {project.media.length > 0 && (
+          <div className="mt-4 space-y-3">
+            {project.media.map((m, i) => (
+              <div key={i} className="flex items-start gap-4">
+                {m.type === "video" ? (
+                  <video
+                    src={m.url}
+                    muted
+                    loop
+                    className="h-24 w-24 object-cover"
+                    style={{ border: "1px solid var(--color-line)" }}
+                  />
+                ) : (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={m.url}
+                    alt=""
+                    className="h-24 w-24 object-cover"
+                    style={{ border: "1px solid var(--color-line)" }}
+                  />
+                )}
+
+                <div className="flex-1 space-y-2">
+                  {(["en", "fr"] as const).map((lang) => (
+                    <input
+                      key={lang}
+                      value={m.caption[lang]}
+                      placeholder={`Caption (${lang})`}
+                      onChange={(e) => {
+                        const next = [...project.media];
+                        next[i] = {
+                          ...m,
+                          caption: { ...m.caption, [lang]: e.target.value },
+                        };
+                        set("media", next);
+                      }}
+                      className="w-full px-3 py-1.5 text-sm"
+                      style={{
+                        border: "1px solid var(--color-line)",
+                        backgroundColor: "var(--color-paper-raised)",
+                      }}
+                    />
+                  ))}
+                </div>
+
+                <button
+                  onClick={() =>
+                    set(
+                      "media",
+                      project.media.filter((_, x) => x !== i)
+                    )
+                  }
+                  className="text-xs"
+                  style={{ color: "var(--color-status-closed)" }}
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="mt-4">
+          <MediaUpload
+            label="Add screenshot or recording"
+            onUploaded={(url, type) => {
+              const item: MediaItem = {
+                url,
+                type,
+                caption: { en: "", fr: "" },
+              };
+              set("media", [...project.media, item]);
+            }}
+          />
+        </div>
       </div>
 
       <div className="rule mt-6 pt-6">

@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import type { Locale } from "@/lib/types";
+import { getDict } from "@/lib/i18n";
 
 /**
  * The hero.
@@ -409,7 +411,9 @@ function Editable({
 export default function HotReloadHero({
   name = "Oussema Mansouri",
   availability = "open" as "available" | "open" | "unavailable",
+  locale = "en" as Locale,
 }) {
+  const d = getDict(locale);
   const [headline, setHeadline] = useState("Builds apps.");
   const [subline, setSubline] = useState("Teaches them too.");
   const [accent, setAccent] = useState(ACCENTS[0]);
@@ -436,9 +440,9 @@ export default function HotReloadHero({
   }, [compileMs]);
 
   const status = {
-    available: { label: "Available for work", color: "#3FCF8E" },
-    open: { label: "Open to offers", color: "#E8B84B" },
-    unavailable: { label: "Not available", color: "#E86B6B" },
+    available: { label: d.available, color: "#3FCF8E" },
+    open: { label: d.open, color: "#E8B84B" },
+    unavailable: { label: d.unavailable, color: "#E86B6B" },
   }[availability];
 
   const screenProps = { headline, subline, accent: accent.hex, radius, pulse };
@@ -481,8 +485,7 @@ export default function HotReloadHero({
               {name}
             </h1>
             <p className="mt-4 max-w-lg text-base" style={{ color: "#9AA3B2" }}>
-              Mobile developer and instructor at TEK-UP. Three years shipping
-              native iOS, cross-platform Flutter, and native Android.
+              {d.heroSub}
             </p>
           </div>
 
@@ -534,17 +537,17 @@ export default function HotReloadHero({
               className="font-[family-name:var(--font-mono)] text-[11px]"
               style={{ color: "#6E7787" }}
             >
-              HeroCard &mdash; shared across all three targets
+              {d.heroEditorNote}
             </p>
             <p
               className="font-[family-name:var(--font-mono)] text-[11px] transition-opacity duration-200"
               style={{ color: "#8B80FF", opacity: pulse ? 1 : 0.4 }}
             >
               {pulse
-                ? "reloading..."
+                ? d.reloading
                 : compileMs !== null
-                  ? `compiled in ${compileMs.toFixed(2)}s`
-                  : "live"}
+                  ? `${d.compiledIn} ${compileMs.toFixed(2)}s`
+                  : d.live}
             </p>
           </div>
 
@@ -581,7 +584,7 @@ export default function HotReloadHero({
                   className="font-[family-name:var(--font-mono)] text-[11px]"
                   style={{ color: "#6E7787" }}
                 >
-                  tint
+                  {d.tint}
                 </span>
                 {ACCENTS.map((a) => (
                   <button
@@ -604,7 +607,7 @@ export default function HotReloadHero({
                   className="font-[family-name:var(--font-mono)] text-[11px]"
                   style={{ color: "#6E7787" }}
                 >
-                  radius
+                  {d.radius}
                 </span>
                 {[0, 8, 16, 26].map((r) => (
                   <button
@@ -629,9 +632,7 @@ export default function HotReloadHero({
               className="text-[13px] transition-opacity duration-500"
               style={{ color: "#6E7787", opacity: touched ? 0.5 : 1 }}
             >
-              {touched
-                ? "One edit, three platforms. That is the job."
-                : "Edit the code - all three devices update as you type."}
+              {touched ? d.heroHintTouched : d.heroHint}
             </p>
           </div>
         </div>

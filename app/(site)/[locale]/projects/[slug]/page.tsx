@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { platformOf, PLATFORM_COLOR } from "@/lib/platform";
+import { isLocale, getDict, LOCALES } from "@/lib/i18n";
+import { t as tr } from "@/lib/types";
 import {
   getProjectBySlug,
   getAllProjectSlugs,
@@ -29,30 +32,42 @@ function isWritten(text?: string): boolean {
 
 export async function generateStaticParams() {
   const slugs = await getAllProjectSlugs();
-  return slugs.map((slug) => ({ slug }));
+  return LOCALES.flatMap((locale) => slugs.map((slug) => ({ locale, slug })));
 }
 
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ locale: string; slug: string }>;
 }): Promise<Metadata> {
-  const { slug } = await params;
+  const { locale, slug } = await params;
   const project = await getProjectBySlug(slug);
   if (!project) return { title: "Not found" };
 
+  const lang = isLocale(locale) ? locale : "en";
+  const site = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+
   return {
-    title: `${project.title.en} - Oussema Mansouri`,
-    description: project.summary.en,
+    title: `${tr(project.title, lang)} - Oussema Mansouri`,
+    description: tr(project.summary, lang),
+    alternates: {
+      canonical: `${site}/${lang}/projects/${slug}`,
+      languages: {
+        en: `${site}/en/projects/${slug}`,
+        fr: `${site}/fr/projects/${slug}`,
+      },
+    },
   };
 }
 
 export default async function Page({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ locale: string; slug: string }>;
 }) {
-  const { slug } = await params;
+  const { locale, slug } = await params;
+  if (!isLocale(locale)) notFound();
+  const d = getDict(locale);
   const [project, skills, all] = await Promise.all([
     getProjectBySlug(slug),
     getSkills(),
@@ -62,54 +77,63 @@ export default async function Page({
   if (!project) notFound();
 
   const stack = skills.filter((s) => project.skillIds.includes(s.id));
+  const platform = platformOf(project, skills);
+  const tint = PLATFORM_COLOR[platform];
   const related = all.filter((p) => p.id !== project.id).slice(0, 2);
 
   const sections = [
-    { label: "Context", body: project.caseStudy.context.en },
-    { label: "The problem", body: project.caseStudy.problem.en },
-    { label: "My role", body: project.caseStudy.role.en },
-    { label: "Technical decisions", body: project.caseStudy.technicalDecisions.en },
-    { label: "Challenges", body: project.caseStudy.challenges.en },
-    { label: "Result", body: project.caseStudy.result.en },
+    { label: d.context, body: tr(project.caseStudy.context, locale) },
+    { label: d.problem, body: tr(project.caseStudy.problem, locale) },
+    { label: d.role, body: tr(project.caseStudy.role, locale) },
+    { label: d.decisions, body: tr(project.caseStudy.technicalDecisions, locale) },
+    { label: d.challenges, body: tr(project.caseStudy.challenges, locale) },
+    { label: d.result, body: tr(project.caseStudy.result, locale) },
   ].filter((s) => isWritten(s.body));
 
   const links = Object.entries(project.links).filter(([, v]) => v);
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-20">
-      <Link href="/projects" className="link-underline text-sm">
-        All projects
+      <Link href={`/${locale}/projects`} className="link-underline text-sm">
+        {d.allProjects}
       </Link>
 
+      <span
+        className="eyebrow mt-10 inline-block border px-2.5 py-1"
+        style={{ borderColor: tint.ink, color: tint.ink }}
+      >
+        {platform}
+      </span>
+
       <h1
-        className="mt-10 font-[family-name:var(--font-display)] font-bold"
+        className="mt-5 font-[family-name:var(--font-display)] font-bold"
         style={{
           fontSize: "clamp(2.25rem, 5vw, 3.5rem)",
           lineHeight: 0.96,
           letterSpacing: "-0.035em",
         }}
       >
-        {project.title.en}
+        {tr(project.title, locale)}
       </h1>
 
       <p
         className="mt-6 leading-relaxed text-[color:var(--color-ink-muted)]"
         style={{ fontSize: "var(--text-lead)" }}
       >
-        {project.summary.en}
+        {tr(project.summary, locale)}
       </p>
 
       {project.metrics.length > 0 && (
         <div className="rule mt-12 flex flex-wrap gap-x-14 gap-y-6 pt-8">
           {project.metrics.map((m) => (
-            <div key={m.label.en}>
+            <div key={tr(m.label, locale)}>
               <p
                 className="font-[family-name:var(--font-display)] font-semibold"
                 style={{ fontSize: "2rem", letterSpacing: "-0.025em" }}
               >
                 {m.value}
               </p>
-              <p className="eyebrow mt-1">{m.label.en}</p>
+              <p className="eyebrow mt-1">{tr(m.label, locale)}</p>
             </div>
           ))}
         </div>
@@ -119,7 +143,7 @@ export default async function Page({
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={project.coverImageUrl}
-          alt={project.title.en}
+          alt={tr(project.title, locale)}
           className="mt-12 w-full"
           style={{ borderRadius: "4px", border: "1px solid var(--color-line)" }}
         />
@@ -127,7 +151,7 @@ export default async function Page({
 
       {sections.length === 0 ? (
         <p className="rule mt-12 pt-8 text-[color:var(--color-ink-muted)]">
-          The write-up for this project is still in progress.
+          {d.writeupInProgress}
         </p>
       ) : (
         <div className="mt-16 space-y-14">
@@ -162,7 +186,7 @@ export default async function Page({
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={m.url}
-                  alt={m.caption.en}
+                  alt={tr(m.caption, locale)}
                   className="w-full"
                   style={{
                     borderRadius: "4px",
@@ -170,8 +194,8 @@ export default async function Page({
                   }}
                 />
               )}
-              {m.caption.en && (
-                <figcaption className="eyebrow mt-3">{m.caption.en}</figcaption>
+              {tr(m.caption, locale) && (
+                <figcaption className="eyebrow mt-3">{tr(m.caption, locale)}</figcaption>
               )}
             </figure>
           ))}
@@ -179,7 +203,7 @@ export default async function Page({
       )}
 
       <section className="rule mt-16 pt-8">
-        <p className="eyebrow">Stack</p>
+        <p className="eyebrow">{d.stack}</p>
         <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2">
           {stack.map((s) => (
             <span
@@ -194,7 +218,7 @@ export default async function Page({
 
       {links.length > 0 && (
         <section className="rule mt-12 pt-8">
-          <p className="eyebrow">Links</p>
+          <p className="eyebrow">{d.links}</p>
           <div className="mt-4 flex flex-wrap gap-6">
             {links.map(([key, url]) => (
               <a
@@ -219,22 +243,22 @@ export default async function Page({
 
       {related.length > 0 && (
         <section className="rule mt-16 pt-8">
-          <p className="eyebrow">Next</p>
+          <p className="eyebrow">{d.next}</p>
           <div className="mt-6 space-y-5">
             {related.map((p) => (
               <Link
                 key={p.id}
-                href={`/projects/${p.slug}`}
+                href={`/${locale}/projects/${p.slug}`}
                 className="block hover:opacity-70"
               >
                 <p
                   className="font-[family-name:var(--font-display)] font-semibold"
                   style={{ fontSize: "1.25rem", letterSpacing: "-0.015em" }}
                 >
-                  {p.title.en}
+                  {tr(p.title, locale)}
                 </p>
                 <p className="mt-1 text-sm text-[color:var(--color-ink-muted)]">
-                  {p.summary.en.slice(0, 110)}...
+                  {tr(p.summary, locale).slice(0, 110)}...
                 </p>
               </Link>
             ))}
@@ -243,8 +267,8 @@ export default async function Page({
       )}
 
       <div className="rule mt-16 pt-8">
-        <Link href="/#contact" className="link-underline text-sm">
-          Get in touch
+        <Link href={`/${locale}#contact`} className="link-underline text-sm">
+          {d.getInTouch}
         </Link>
       </div>
     </main>

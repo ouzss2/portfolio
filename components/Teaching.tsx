@@ -1,4 +1,6 @@
-import type { Experience } from "@/lib/types";
+import type { Experience, Locale } from "@/lib/types";
+import { t as tr } from "@/lib/types";
+import { getDict } from "@/lib/i18n";
 
 /**
  * Teaching and mentoring.
@@ -12,7 +14,14 @@ import type { Experience } from "@/lib/types";
  * marks this as the second thing worth stopping on.
  */
 
-export default function Teaching({ experiences }: { experiences: Experience[] }) {
+export default function Teaching({
+  experiences,
+  locale,
+}: {
+  experiences: Experience[];
+  locale: Locale;
+}) {
+  const d = getDict(locale);
   const teaching = experiences.filter(
     (e) => e.company.toLowerCase().includes("tek-up") && e.endDate === null
   );
@@ -39,7 +48,7 @@ export default function Teaching({ experiences }: { experiences: Experience[] })
           className="font-[family-name:var(--font-mono)] text-xs uppercase tracking-[0.14em]"
           style={{ color: "#6E7787" }}
         >
-          Teaching
+          {d.teaching}
         </p>
 
         <h2
@@ -50,15 +59,11 @@ export default function Teaching({ experiences }: { experiences: Experience[] })
             letterSpacing: "-0.03em",
           }}
         >
-          I teach the stack I build in.
+          {d.teachingTitle}
         </h2>
 
         <p className="mt-6 max-w-xl text-lg leading-relaxed" style={{ color: "#9AA3B2" }}>
-          Since 2024 I have taught mobile development to engineering students at
-          TEK-UP, supervised their application projects end to end, and run the
-          technical reviews. Explaining an architecture decision to twenty
-          students is a different skill from making it - and it makes the
-          decisions better.
+          {d.teachingBody}
         </p>
 
         <div className="mt-16 grid gap-12 md:grid-cols-2">
@@ -68,14 +73,14 @@ export default function Teaching({ experiences }: { experiences: Experience[] })
                 className="font-[family-name:var(--font-display)] font-semibold"
                 style={{ fontSize: "1.375rem", letterSpacing: "-0.015em" }}
               >
-                {role.role.en}
+                {tr(role.role, locale)}
               </h3>
               <p
                 className="mt-1 font-[family-name:var(--font-mono)] text-xs"
                 style={{ color: "#6E7787" }}
               >
                 {role.company} &middot;{" "}
-                {new Date(role.startDate).getFullYear()} - present
+                {new Date(role.startDate).getFullYear()} - {d.present}
               </p>
 
               <ul className="mt-5 space-y-3">
@@ -88,7 +93,7 @@ export default function Teaching({ experiences }: { experiences: Experience[] })
                       borderLeft: "1px solid #2A3140",
                     }}
                   >
-                    {a.en}
+                    {tr(a, locale)}
                   </li>
                 ))}
               </ul>
@@ -101,7 +106,7 @@ export default function Teaching({ experiences }: { experiences: Experience[] })
             className="font-[family-name:var(--font-mono)] text-xs uppercase tracking-[0.14em]"
             style={{ color: "#6E7787" }}
           >
-            Taught
+            {d.taught}
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
             {topics.map((t) => (

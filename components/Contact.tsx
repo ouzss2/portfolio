@@ -1,4 +1,6 @@
-import type { Profile } from "@/lib/types";
+import type { Profile, Locale } from "@/lib/types";
+import { getDict } from "@/lib/i18n";
+import ContactForm from "./ContactForm";
 
 /**
  * Contact.
@@ -11,11 +13,18 @@ import type { Profile } from "@/lib/types";
  * channels are live, which is what a recruiter reaches for anyway.
  */
 
-export default function Contact({ profile }: { profile: Profile | null }) {
+export default function Contact({
+  profile,
+  locale,
+}: {
+  profile: Profile | null;
+  locale: Locale;
+}) {
   if (!profile) return null;
+  const d = getDict(locale);
 
   const channels = [
-    { label: "Email", value: profile.email, href: `mailto:${profile.email}` },
+    { label: d.email, value: profile.email, href: `mailto:${profile.email}` },
     { label: "Phone", value: profile.phone, href: `tel:${profile.phone.replace(/\s/g, "")}` },
     profile.linkedinUrl
       ? { label: "LinkedIn", value: "View profile", href: profile.linkedinUrl }
@@ -26,9 +35,9 @@ export default function Contact({ profile }: { profile: Profile | null }) {
   ].filter(Boolean) as Array<{ label: string; value: string; href: string }>;
 
   return (
-    <section className="mx-auto max-w-5xl px-6 pb-32 pt-28">
+    <section id="contact" className="mx-auto max-w-5xl px-6 pb-32 pt-28">
       <div className="rule pt-8">
-        <p className="eyebrow">Contact</p>
+        <p className="eyebrow">{d.contact}</p>
       </div>
 
       <h2
@@ -39,36 +48,26 @@ export default function Contact({ profile }: { profile: Profile | null }) {
           letterSpacing: "-0.03em",
         }}
       >
-        Hiring, or building something mobile?
+        {d.contactTitle}
       </h2>
 
       <p className="mt-6 max-w-lg leading-relaxed text-[color:var(--color-ink-muted)]">
-        Based in Tunis, open to remote and relocation. I reply within two
-        working days.
+        {d.contactBody}
       </p>
 
-      <div className="mt-10 flex flex-wrap items-center gap-4">
-        <a
-          href={`mailto:${profile.email}`}
-          className="px-6 py-3.5 text-sm font-medium transition-opacity hover:opacity-90"
-          style={{
-            backgroundColor: "var(--color-accent)",
-            color: "var(--color-paper)",
-          }}
-        >
-          Send an email
-        </a>
+      <ContactForm locale={locale} />
 
-        {profile.cvUrls.en && (
+      {profile.cvUrls.en && (
+        <div className="mt-8">
           <a
-            href={profile.cvUrls.en}
+            href={locale === "fr" && profile.cvUrls.fr ? profile.cvUrls.fr : profile.cvUrls.en}
             className="border px-6 py-3.5 text-sm font-medium transition-colors hover:bg-[color:var(--color-paper-raised)]"
             style={{ borderColor: "var(--color-ink)" }}
           >
-            Download CV
+            {d.downloadCv}
           </a>
-        )}
-      </div>
+        </div>
+      )}
 
       <dl className="mt-16 grid gap-x-12 gap-y-6 sm:grid-cols-2 md:grid-cols-4">
         {channels.map((c) => (
@@ -84,8 +83,7 @@ export default function Contact({ profile }: { profile: Profile | null }) {
       </dl>
 
       <p className="mt-20 font-[family-name:var(--font-mono)] text-xs text-[color:var(--color-ink-muted)]">
-        Built with Next.js and Firestore. Content managed from a custom admin
-        and an iOS companion app.
+        {d.builtWith}
       </p>
     </section>
   );

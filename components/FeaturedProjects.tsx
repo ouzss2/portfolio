@@ -3,7 +3,10 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import DeviceFrame from "./DeviceFrame";
-import type { Project, Skill } from "@/lib/types";
+import type { Project, Skill, Locale } from "@/lib/types";
+import { t as tr } from "@/lib/types";
+import { getDict } from "@/lib/i18n";
+import { platformOf, PLATFORM_COLOR } from "@/lib/platform";
 
 /**
  * Selected work.
@@ -18,44 +21,29 @@ import type { Project, Skill } from "@/lib/types";
  * than broken. Real recordings replace it the moment they exist.
  */
 
-const PLATFORM_TINT: Record<string, string> = {
-  iOS: "#3B2FBF",
-  Flutter: "#0553B1",
-  Android: "#2E9E63",
-  Mobile: "#4A5568",
-};
-
-function platformOf(project: Project, skills: Skill[]): string {
-  const names = skills
-    .filter((s) => project.skillIds.includes(s.id))
-    .map((s) => s.name.toLowerCase());
-  if (names.some((n) => n.includes("flutter") || n.includes("dart"))) return "Flutter";
-  if (names.some((n) => n.includes("swift") || n.includes("uikit"))) return "iOS";
-  if (names.some((n) => n.includes("kotlin") || n.includes("java"))) return "Android";
-  return "Mobile";
-}
-
 function Screen({
   project,
   platform,
   stack,
+  locale,
 }: {
   project: Project;
   platform: string;
   stack: Skill[];
+  locale: Locale;
 }) {
   if (project.coverImageUrl) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
       <img
         src={project.coverImageUrl}
-        alt={project.title.en}
+        alt={tr(project.title, locale)}
         className="h-full w-full object-cover"
       />
     );
   }
 
-  const tint = PLATFORM_TINT[platform] ?? PLATFORM_TINT.Mobile;
+  const tint = PLATFORM_COLOR[platform as keyof typeof PLATFORM_COLOR].fill;
 
   return (
     <div className="flex h-full flex-col px-5 pb-6 pt-14">
@@ -70,7 +58,7 @@ function Screen({
         className="mt-2 font-[family-name:var(--font-display)] font-bold leading-[1.05]"
         style={{ fontSize: "1.5rem", letterSpacing: "-0.02em", color: "#141A17" }}
       >
-        {project.title.en}
+        {tr(project.title, locale)}
       </p>
 
       <div
@@ -81,7 +69,7 @@ function Screen({
           className="text-[13px] leading-relaxed"
           style={{ color: "#FFFFFF", opacity: 0.92 }}
         >
-          {project.summary.en.slice(0, 150)}
+          {tr(project.summary, locale).slice(0, 150)}
         </p>
       </div>
 
@@ -103,10 +91,13 @@ function Screen({
 export default function FeaturedProjects({
   projects,
   skills,
+  locale,
 }: {
   projects: Project[];
   skills: Skill[];
+  locale: Locale;
 }) {
+  const d = getDict(locale);
   const [active, setActive] = useState(0);
   const blocks = useRef<Array<HTMLElement | null>>([]);
 
@@ -136,11 +127,10 @@ export default function FeaturedProjects({
     return (
       <section className="mx-auto max-w-5xl px-6 py-28">
         <div className="rule pt-8">
-          <p className="eyebrow">Selected work</p>
+          <p className="eyebrow">{d.selectedWork}</p>
         </div>
         <p className="mt-6 max-w-md text-[color:var(--color-ink-muted)]">
-          No published projects yet. Write a case study in the admin and switch
-          it to published - it will appear here.
+          {d.noProjects}
         </p>
       </section>
     );
@@ -153,9 +143,9 @@ export default function FeaturedProjects({
   return (
     <section className="mx-auto max-w-6xl px-6 py-24">
       <div className="rule flex items-baseline justify-between pt-8">
-        <p className="eyebrow">Selected work</p>
-        <Link href="/projects" className="link-underline text-sm">
-          All projects
+        <p className="eyebrow">{d.selectedWork}</p>
+        <Link href={`/${locale}/projects`} className="link-underline text-sm">
+          {d.allProjects}
         </Link>
       </div>
 
@@ -177,7 +167,10 @@ export default function FeaturedProjects({
               >
                 <span
                   className="eyebrow inline-block self-start border px-2.5 py-1"
-                  style={{ borderColor: "var(--color-line)" }}
+                  style={{
+                    borderColor: PLATFORM_COLOR[platform].ink,
+                    color: PLATFORM_COLOR[platform].ink,
+                  }}
                 >
                   {platform}
                 </span>
@@ -190,26 +183,26 @@ export default function FeaturedProjects({
                     letterSpacing: "var(--text-title--letter-spacing)",
                   }}
                 >
-                  <Link href={`/projects/${project.slug}`} className="hover:opacity-70">
-                    {project.title.en}
+                  <Link href={`/${locale}/projects/${project.slug}`} className="hover:opacity-70">
+                    {tr(project.title, locale)}
                   </Link>
                 </h3>
 
                 <p className="mt-4 max-w-md leading-relaxed text-[color:var(--color-ink-muted)]">
-                  {project.summary.en}
+                  {tr(project.summary, locale)}
                 </p>
 
                 {project.metrics.length > 0 && (
                   <div className="mt-7 flex flex-wrap gap-x-10 gap-y-4">
                     {project.metrics.slice(0, 3).map((m) => (
-                      <div key={m.label.en}>
+                      <div key={tr(m.label, locale)}>
                         <p
                           className="font-[family-name:var(--font-display)] font-semibold"
                           style={{ fontSize: "1.5rem", letterSpacing: "-0.02em" }}
                         >
                           {m.value}
                         </p>
-                        <p className="eyebrow mt-1">{m.label.en}</p>
+                        <p className="eyebrow mt-1">{tr(m.label, locale)}</p>
                       </div>
                     ))}
                   </div>
@@ -227,10 +220,10 @@ export default function FeaturedProjects({
                 </div>
 
                 <Link
-                  href={`/projects/${project.slug}`}
+                  href={`/${locale}/projects/${project.slug}`}
                   className="link-underline mt-7 self-start text-sm"
                 >
-                  Read the case study
+                  {d.readCaseStudy}
                 </Link>
               </article>
             );
@@ -250,6 +243,7 @@ export default function FeaturedProjects({
                     project={current}
                     platform={currentPlatform}
                     stack={currentStack}
+                    locale={locale}
                   />
                 </div>
               </DeviceFrame>
