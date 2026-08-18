@@ -215,7 +215,7 @@ export default function ProjectEditor({
         <div className="mt-3">
           <MediaUpload
             label={project.coverImageUrl ? "Replace cover" : "Upload cover"}
-            accept="image/*"
+            accept="image"
             onUploaded={(url) => set("coverImageUrl", url)}
           />
         </div>

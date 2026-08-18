@@ -1,3 +1,22 @@
+# ============================================================
+#  Portfolio - build fix (MediaUpload props)
+#  Run from project root:  .\setup-buildfix.ps1
+# ============================================================
+
+$ErrorActionPreference = "Stop"
+if (-not (Test-Path ".\package.json")) {
+  Write-Host "ERROR: run this from the portfolio root." -ForegroundColor Red; exit 1
+}
+$utf8NoBom = New-Object System.Text.UTF8Encoding $false
+function Write-File($relPath, $content) {
+  $full = Join-Path $PWD.Path $relPath
+  $dir  = Split-Path $full -Parent
+  if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Force -Path $dir | Out-Null }
+  [System.IO.File]::WriteAllText($full, $content, $utf8NoBom)
+  Write-Host ("  wrote  " + $relPath) -ForegroundColor Green
+}
+
+$c0 = @'
 "use client";
 
 import { useState, useRef } from "react";
@@ -167,3 +186,29 @@ export default function MediaUpload({
     </div>
   );
 }
+
+'@
+Write-File 'components\admin\MediaUpload.tsx' $c0
+
+
+# Fix the call site: accept takes a Kind, not a MIME pattern.
+$editor = ".\app\(admin)\admin\projects\[id]\page.tsx"
+if (Test-Path $editor) {
+  $c = [System.IO.File]::ReadAllText((Resolve-Path $editor).Path)
+  $c = $c.Replace('accept="image/*"', 'accept="image"')
+  $c = $c.Replace('accept="video/*"', 'accept="video"')
+  $c = $c.Replace('accept="image/*,video/*"', 'accept="both"')
+  [System.IO.File]::WriteAllText((Resolve-Path $editor).Path, $c, $utf8NoBom)
+  Write-Host "  fixed  accept props in project editor" -ForegroundColor Green
+}
+
+# Stale generated types still reference routes deleted during the i18n
+# restructure. They regenerate on the next build.
+if (Test-Path ".\.next") {
+  Remove-Item -Recurse -Force ".\.next"
+  Write-Host "  cleared .next cache" -ForegroundColor DarkGray
+}
+
+Write-Host ""
+Write-Host "Now run:  npx tsc --noEmit" -ForegroundColor Yellow
+Write-Host "It should report no errors. Then commit and push." -ForegroundColor Yellow
